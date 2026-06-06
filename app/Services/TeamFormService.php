@@ -46,6 +46,11 @@ class TeamFormService implements TeamFormServiceInterface
 
     public function adjust(Team $team): void
     {
-        $team->power = max(1, min(100, (int) round($team->power * $this->factor($team))));
+        // The logistic strength scale works in power POINTS, so the
+        // multiplicative form factor is translated into a bounded
+        // additive nudge (±2 points at the clamp extremes).
+        $delta = ($this->factor($team) - 1) * 20;
+
+        $team->power = max(1, min(100, (int) round($team->power + $delta)));
     }
 }

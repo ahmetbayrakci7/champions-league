@@ -18,4 +18,10 @@ interface KnockoutServiceInterface
      * finished ties (extra time + penalties) and seed the next round.
      */
     public function advance(): void;
+
+    /**
+     * Play the whole knockout phase to the end: draw if needed, then
+     * every remaining leg through to the final — champion decided.
+     */
+    public function advanceAll(): void;
 }

@@ -85,6 +85,37 @@ class KnockoutApiTest extends TestCase
         $this->postJson('/api/knockout/advance')->assertStatus(409);
     }
 
+    public function test_advance_all_plays_the_whole_knockout_to_a_champion(): void
+    {
+        $this->postJson('/api/league/play-all');
+
+        $response = $this->postJson('/api/knockout/advance-all');
+
+        $response->assertOk();
+        $this->assertNotNull($response->json('champion'), 'advance-all must crown a champion');
+        $this->assertSame('done', $response->json('next.action'));
+
+        $this->assertSame(15, Tie::count());
+        $this->assertSame(0, Game::where('stage', '!=', 'group')->where('is_played', false)->count());
+    }
+
+    public function test_advance_all_finishes_from_a_mid_knockout_state(): void
+    {
+        $this->postJson('/api/league/play-all');
+        $this->postJson('/api/knockout/advance'); // draw
+        $this->postJson('/api/knockout/advance'); // R16 leg 1
+
+        $response = $this->postJson('/api/knockout/advance-all');
+
+        $response->assertOk();
+        $this->assertNotNull($response->json('champion'));
+    }
+
+    public function test_advance_all_requires_a_finished_group_stage(): void
+    {
+        $this->postJson('/api/knockout/advance-all')->assertStatus(409);
+    }
+
     public function test_knockout_results_cannot_be_edited(): void
     {
         $this->postJson('/api/league/play-all');

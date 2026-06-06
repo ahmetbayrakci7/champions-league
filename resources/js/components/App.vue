@@ -49,7 +49,7 @@ onMounted(() => league.fetchState());
                 <StatsBoard v-else class="reveal" style="--delay: 60ms" />
             </template>
 
-            <ControlBar v-if="!league.loading && league.drawn && league.view === 'groups'" />
+            <ControlBar v-if="!league.loading && league.drawn && league.view !== 'stats'" />
             <TeamModal />
             <MatchModal />
         </main>

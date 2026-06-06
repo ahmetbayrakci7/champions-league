@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from 'vue';
 import { useLeagueStore } from '../stores/league';
 import { t } from '../i18n';
 
@@ -10,19 +9,6 @@ function sideGoals(tie, game, teamId) {
 
     return game.home_team_id === teamId ? game.home_goals : game.away_goals;
 }
-
-const nextLabel = computed(() => {
-    const next = league.knockout?.next;
-
-    if (!next) return null;
-
-    if (next.action === 'draw') return t('ko.draw_r16');
-    if (next.action === 'done') return t('ko.done');
-
-    return next.leg
-        ? t('ko.play', { stage: t(`stage.${next.stage}`), leg: next.leg })
-        : t('ko.playSingle', { stage: t(`stage.${next.stage}`) });
-});
 </script>
 
 <template>
@@ -73,11 +59,12 @@ const nextLabel = computed(() => {
                             >
                                 <img v-if="tie.home_team.logo_url" class="tie__logo" :src="tie.home_team.logo_url" :alt="tie.home_team.name">
                                 <b class="tie__code">{{ tie.home_team.code }}</b>
+                                <i v-if="tie.winner_team_id === tie.home_team.id" class="tie__check" :title="t('ko.through')">&#10003;</i>
                             </div>
 
                             <div class="tie__centre">
                                 <b class="tie__aggregate">
-                                    {{ tie.aggregate.home }}<i>:</i>{{ tie.aggregate.away }}
+                                    <span :class="{ 'is-ahead': tie.winner_team_id === tie.home_team.id }">{{ tie.aggregate.home }}</span><i>:</i><span :class="{ 'is-ahead': tie.winner_team_id === tie.away_team.id }">{{ tie.aggregate.away }}</span>
                                 </b>
                                 <span class="tie__legs">
                                     <button
@@ -104,6 +91,7 @@ const nextLabel = computed(() => {
                                 :class="{ 'is-winner': tie.winner_team_id === tie.away_team.id }"
                                 :style="{ '--team-color': tie.away_team.color }"
                             >
+                                <i v-if="tie.winner_team_id === tie.away_team.id" class="tie__check" :title="t('ko.through')">&#10003;</i>
                                 <b class="tie__code">{{ tie.away_team.code }}</b>
                                 <img v-if="tie.away_team.logo_url" class="tie__logo" :src="tie.away_team.logo_url" :alt="tie.away_team.name">
                             </div>
@@ -112,18 +100,6 @@ const nextLabel = computed(() => {
                 </div>
             </div>
 
-            <div class="bracket__actions">
-                <button
-                    v-if="league.knockout.next && league.knockout.next.action !== 'done'"
-                    type="button"
-                    class="controls__btn controls__btn--primary"
-                    :disabled="!!league.busyAction"
-                    @click="league.advanceKnockout()"
-                >
-                    <span v-if="league.busyAction === 'knockout'" class="controls__spinner" aria-hidden="true"></span>
-                    <template v-else>{{ nextLabel }} <span aria-hidden="true">&#9654;</span></template>
-                </button>
-            </div>
         </template>
     </section>
 </template>

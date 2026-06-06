@@ -12,10 +12,10 @@ use App\Services\Contracts\SuspensionServiceInterface;
  * every 3rd accumulated yellow card, rule the player out of his
  * team's next fixture — including across the group/knockout border.
  *
- * UEFA amnesty: yellow cards expire on completion of the
- * quarter-finals so nobody misses the final on bookings alone — but a
- * ban already earned in the QF second leg is still served in the
- * semis, and red cards are never forgiven.
+ * Yellow-card amnesty: ALL bookings are wiped once the quarter-finals
+ * are complete — from the semi-finals on nobody can miss a match
+ * through yellow accumulation. Red cards are never forgiven: a sending
+ * off in the SF second leg still costs the final.
  */
 class SuspensionService implements SuspensionServiceInterface
 {
@@ -68,15 +68,16 @@ class SuspensionService implements SuspensionServiceInterface
         if ($bookedLastMatch->isNotEmpty()) {
             $threshold = (int) config('league.suspension.yellow_threshold');
 
-            // Yellow amnesty: bookings expire once the quarter-finals
-            // are complete, so from the semis on only post-QF yellows
-            // count towards an accumulation ban.
+            // Yellow amnesty: bookings are wiped once the quarter-finals
+            // are complete. For any match after the reset point only
+            // post-QF yellows count — so a 3rd yellow picked up in the
+            // QF second leg no longer bans anyone for the semi-final.
             $resetWeek = max(config('league.knockout_weeks.qf', [0]));
 
             $teamGameIds = Game::where('is_played', true)
                 ->where('week', '<=', $previous->week)
                 ->when(
-                    $resetWeek > 0 && $previous->week > $resetWeek,
+                    $resetWeek > 0 && $game->week > $resetWeek,
                     fn ($query) => $query->where('week', '>', $resetWeek),
                 )
                 ->where(fn ($query) => $query

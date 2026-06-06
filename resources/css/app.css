@@ -13,7 +13,7 @@
     --ink-dim: #8aa18c;
     --ink-faint: #54684f;
     --lime: #b8f23e;
-    --lime-soft: rgba(184, 242, 62, 0.12);
+    --lime-soft: color-mix(in srgb, var(--lime) 12%, transparent);
     --gold: #ffd24a;
     --danger: #ff5d5d;
     --font-display: 'Anybody', sans-serif;
@@ -44,7 +44,7 @@ body {
 
 ::selection {
     background: var(--lime);
-    color: #0a120c;
+    color: var(--accent-ink);
 }
 
 /* ---------- pitch backdrop -------------------------------- */
@@ -86,7 +86,7 @@ body {
 .pitch__glow--left {
     top: -30vw;
     left: -18vw;
-    background: radial-gradient(circle, rgba(184, 242, 62, 0.10), transparent 65%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--lime) 10%, transparent), transparent 65%);
 }
 
 .pitch__glow--right {
@@ -217,9 +217,9 @@ body {
 }
 
 .lang__btn.is-active {
-    color: #0a120c;
+    color: var(--accent-ink);
     background: var(--lime);
-    box-shadow: 0 0 12px rgba(184, 242, 62, 0.35);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--lime) 35%, transparent);
 }
 
 .header__week {
@@ -242,7 +242,7 @@ body {
     font-size: clamp(40px, 5vw, 58px);
     line-height: 1;
     color: var(--lime);
-    text-shadow: 0 0 26px rgba(184, 242, 62, 0.35);
+    text-shadow: 0 0 26px color-mix(in srgb, var(--lime) 35%, transparent);
 }
 
 .header__week-value small {
@@ -253,7 +253,7 @@ body {
 
 .header__week-value--over {
     color: var(--gold);
-    text-shadow: 0 0 26px rgba(255, 210, 74, 0.4);
+    text-shadow: 0 0 26px color-mix(in srgb, var(--gold) 40%, transparent);
 }
 
 .header__progress {
@@ -273,7 +273,7 @@ body {
 
 .header__segment.is-filled {
     background: var(--lime);
-    box-shadow: 0 0 10px rgba(184, 242, 62, 0.5);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--lime) 50%, transparent);
 }
 
 /* ---------- panels ------------------------------------------ */
@@ -312,7 +312,7 @@ body {
     margin-right: 9px;
     background: var(--lime);
     transform: skewX(-12deg);
-    box-shadow: 0 0 12px rgba(184, 242, 62, 0.6);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--lime) 60%, transparent);
 }
 
 .panel__badge {
@@ -328,7 +328,7 @@ body {
 
 .panel__badge--gold {
     color: var(--gold);
-    border-color: rgba(255, 210, 74, 0.4);
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent);
 }
 
 .panel__hint {
@@ -389,9 +389,9 @@ body {
 }
 
 .table__row.is-champion {
-    border-color: rgba(255, 210, 74, 0.55);
-    background: linear-gradient(90deg, rgba(255, 210, 74, 0.12), rgba(255, 255, 255, 0.02) 60%);
-    box-shadow: 0 0 30px rgba(255, 210, 74, 0.12);
+    border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 12%, transparent), rgba(255, 255, 255, 0.02) 60%);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--gold) 12%, transparent);
 }
 
 .table__pos {
@@ -448,7 +448,7 @@ body {
 .table__crown {
     color: var(--gold);
     font-size: 15px;
-    filter: drop-shadow(0 0 6px rgba(255, 210, 74, 0.7));
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--gold) 70%, transparent));
 }
 
 .table__stat {
@@ -536,10 +536,10 @@ body {
 }
 
 .weeks__pill.is-active {
-    color: #0a120c;
+    color: var(--accent-ink);
     background: var(--lime);
     border-color: var(--lime);
-    box-shadow: 0 0 18px rgba(184, 242, 62, 0.35);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--lime) 35%, transparent);
 }
 
 .matches__list {
@@ -573,7 +573,7 @@ body {
 
 .game.is-editing {
     border-color: var(--lime);
-    box-shadow: 0 0 0 1px var(--lime), 0 0 24px rgba(184, 242, 62, 0.15);
+    box-shadow: 0 0 0 1px var(--lime), 0 0 24px color-mix(in srgb, var(--lime) 15%, transparent);
 }
 
 .game__kickoff {
@@ -658,7 +658,7 @@ body {
     0% {
         transform: scale(1.6);
         color: var(--lime);
-        text-shadow: 0 0 20px rgba(184, 242, 62, 0.8);
+        text-shadow: 0 0 20px color-mix(in srgb, var(--lime) 80%, transparent);
     }
 
     100% {
@@ -735,7 +735,7 @@ body {
 
 .game__btn--save:hover {
     background: var(--lime);
-    color: #0a120c;
+    color: var(--accent-ink);
 }
 
 .game__btn:disabled {
@@ -849,7 +849,7 @@ body {
 
 .is-locked-in .odds__value {
     color: var(--gold);
-    text-shadow: 0 0 16px rgba(255, 210, 74, 0.5);
+    text-shadow: 0 0 16px color-mix(in srgb, var(--gold) 50%, transparent);
 }
 
 .odds__track {
@@ -912,23 +912,23 @@ body {
 }
 
 .controls__btn--primary {
-    color: #0a120c;
+    color: var(--accent-ink);
     background: var(--lime);
     border-color: var(--lime);
-    box-shadow: 0 0 26px rgba(184, 242, 62, 0.35);
+    box-shadow: 0 0 26px color-mix(in srgb, var(--lime) 35%, transparent);
 }
 
 .controls__btn--primary:hover:not(:disabled) {
-    box-shadow: 0 0 38px rgba(184, 242, 62, 0.55);
+    box-shadow: 0 0 38px color-mix(in srgb, var(--lime) 55%, transparent);
 }
 
 .controls__btn--danger {
     color: var(--danger);
-    border-color: rgba(255, 93, 93, 0.35);
+    border-color: color-mix(in srgb, var(--danger) 35%, transparent);
 }
 
 .controls__btn--danger:hover:not(:disabled) {
-    background: rgba(255, 93, 93, 0.1);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
     border-color: var(--danger);
 }
 
@@ -1129,10 +1129,10 @@ body {
 }
 
 .group-tabs__tab.is-active {
-    color: #0a120c;
+    color: var(--accent-ink);
     background: var(--lime);
     border-color: var(--lime);
-    box-shadow: 0 0 20px rgba(184, 242, 62, 0.35);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--lime) 35%, transparent);
 }
 
 .group-tabs__tab.is-active small {
@@ -1317,15 +1317,15 @@ body {
 }
 
 .player__ovr.is-elite {
-    color: #0a120c;
+    color: var(--accent-ink);
     background: var(--lime);
     border-color: var(--lime);
-    box-shadow: 0 0 14px rgba(184, 242, 62, 0.4);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--lime) 40%, transparent);
 }
 
 .player__ovr.is-great {
     color: var(--lime);
-    border-color: rgba(184, 242, 62, 0.5);
+    border-color: color-mix(in srgb, var(--lime) 50%, transparent);
 }
 
 .player__ovr.is-good {
@@ -1462,14 +1462,14 @@ body {
 }
 
 .group-tabs__tab.is-hot:not(.is-active) {
-    border-color: rgba(255, 210, 74, 0.55);
+    border-color: color-mix(in srgb, var(--gold) 55%, transparent);
     color: var(--gold);
     animation: hot-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes hot-pulse {
     50% {
-        box-shadow: 0 0 16px rgba(255, 210, 74, 0.35);
+        box-shadow: 0 0 16px color-mix(in srgb, var(--gold) 35%, transparent);
     }
 }
 
@@ -1593,7 +1593,7 @@ body {
 
 .probs__seg--home {
     background: var(--lime);
-    box-shadow: 0 0 12px rgba(184, 242, 62, 0.5);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--lime) 50%, transparent);
 }
 
 .probs__seg--draw {
@@ -1667,11 +1667,11 @@ body {
 }
 
 .timeline__item.is-goal {
-    background: rgba(184, 242, 62, 0.06);
+    background: color-mix(in srgb, var(--lime) 6%, transparent);
 }
 
 .timeline__item.is-red {
-    background: rgba(255, 93, 93, 0.06);
+    background: color-mix(in srgb, var(--danger) 6%, transparent);
 }
 
 .timeline__minute {
@@ -1750,9 +1750,9 @@ body {
     font-size: 11px;
     font-weight: 700;
     color: var(--ink-dim);
-    border: 1px solid rgba(255, 93, 93, 0.35);
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
     border-radius: 999px;
-    background: rgba(255, 93, 93, 0.06);
+    background: color-mix(in srgb, var(--danger) 6%, transparent);
 }
 
 .bans__chip i {
@@ -1823,7 +1823,7 @@ body {
 .lineups__motm {
     color: var(--gold);
     font-style: normal;
-    filter: drop-shadow(0 0 5px rgba(255, 210, 74, 0.8));
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--gold) 80%, transparent));
 }
 
 .lineups__badges {
@@ -1876,14 +1876,14 @@ body {
 }
 
 .lineups__rating.is-elite {
-    color: #0a120c;
+    color: var(--accent-ink);
     background: var(--lime);
     border-color: var(--lime);
 }
 
 .lineups__rating.is-great {
     color: var(--lime);
-    border-color: rgba(184, 242, 62, 0.5);
+    border-color: color-mix(in srgb, var(--lime) 50%, transparent);
 }
 
 .lineups__rating.is-good {
@@ -1902,10 +1902,10 @@ body {
     gap: 14px;
     padding: 14px 18px;
     margin-bottom: 18px;
-    border: 1px solid rgba(255, 210, 74, 0.5);
+    border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent);
     border-radius: 12px;
-    background: linear-gradient(90deg, rgba(255, 210, 74, 0.12), transparent 70%);
-    box-shadow: 0 0 34px rgba(255, 210, 74, 0.12);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 12%, transparent), transparent 70%);
+    box-shadow: 0 0 34px color-mix(in srgb, var(--gold) 12%, transparent);
 }
 
 .bracket__champion img {
@@ -1977,20 +1977,41 @@ body {
     align-items: center;
     gap: 8px;
     min-width: 0;
-    opacity: 0.7;
+    padding: 5px 9px;
+    border-radius: 9px;
+    transition: opacity 0.3s, background 0.3s;
 }
 
 .tie__side--away {
     justify-content: flex-end;
 }
 
+/* decided tie: loser fades out, winner lights up */
+.tie.is-decided .tie__side:not(.is-winner) {
+    opacity: 0.38;
+}
+
+.tie.is-decided .tie__side:not(.is-winner) .tie__logo {
+    filter: grayscale(0.8) opacity(0.8);
+}
+
 .tie__side.is-winner {
-    opacity: 1;
+    background: color-mix(in srgb, var(--lime) 13%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lime) 40%, transparent),
+        0 0 18px color-mix(in srgb, var(--lime) 12%, transparent);
 }
 
 .tie__side.is-winner .tie__code {
     color: var(--lime);
-    text-shadow: 0 0 14px rgba(184, 242, 62, 0.4);
+    text-shadow: 0 0 14px color-mix(in srgb, var(--lime) 50%, transparent);
+}
+
+.tie__check {
+    font-style: normal;
+    font-weight: 900;
+    font-size: 12px;
+    color: var(--lime);
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--lime) 70%, transparent));
 }
 
 .tie__logo {
@@ -2026,6 +2047,15 @@ body {
     font-style: normal;
     color: var(--ink-faint);
     padding: 0 5px;
+}
+
+.tie__aggregate span {
+    color: var(--ink-dim);
+}
+
+.tie__aggregate span.is-ahead {
+    color: var(--lime);
+    text-shadow: 0 0 16px color-mix(in srgb, var(--lime) 45%, transparent);
 }
 
 .tie__legs {
@@ -2109,12 +2139,6 @@ body {
     background: var(--ink-faint);
 }
 
-.bracket__actions {
-    margin-top: 18px;
-    display: flex;
-    justify-content: center;
-}
-
 /* ---------- stats board ----------------------------------------- */
 
 .statsboard__grid {
@@ -2131,7 +2155,7 @@ body {
 }
 
 .statcard--highlight {
-    border-color: rgba(255, 210, 74, 0.4);
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent);
 }
 
 .statcard__title {
@@ -2259,14 +2283,14 @@ body {
 }
 
 .player__form.is-elite {
-    color: #0a120c;
+    color: var(--accent-ink);
     background: var(--gold);
     border-color: var(--gold);
 }
 
 .player__form.is-great {
     color: var(--lime);
-    border-color: rgba(184, 242, 62, 0.5);
+    border-color: color-mix(in srgb, var(--lime) 50%, transparent);
 }
 
 .player__form.is-good {
@@ -2336,3 +2360,137 @@ body {
         transform: translateY(0);
     }
 }
+
+/* ============================================================
+   THEME: STARLIGHT ANTHEM — UCL night sky, platinum & glass
+   ============================================================ */
+
+[data-theme='starlight'] {
+    --bg: #070b1e;
+    --panel: #0c1230;
+    --panel-raised: #121940;
+    --line: #1d2552;
+    --line-bright: #32407f;
+    --ink: #eef0fa;
+    --ink-dim: #9aa3c7;
+    --ink-faint: #5a6390;
+    --lime: #cdd6f4;
+    --accent-ink: #0a0f2a;
+    --gold: #e8c574;
+    --danger: #ff7575;
+    --font-display: 'Cinzel', serif;
+    --font-body: 'Manrope', sans-serif;
+    --radius: 16px;
+}
+
+[data-theme='starlight'] .pitch {
+    background:
+        radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.5), transparent 100%),
+        radial-gradient(1px 1px at 32% 64%, rgba(255, 255, 255, 0.35), transparent 100%),
+        radial-gradient(1.5px 1.5px at 56% 28%, rgba(255, 255, 255, 0.45), transparent 100%),
+        radial-gradient(1px 1px at 74% 76%, rgba(255, 255, 255, 0.3), transparent 100%),
+        radial-gradient(1px 1px at 88% 12%, rgba(255, 255, 255, 0.4), transparent 100%),
+        radial-gradient(2px 2px at 44% 88%, rgba(255, 255, 255, 0.25), transparent 100%),
+        radial-gradient(1px 1px at 64% 52%, rgba(255, 255, 255, 0.3), transparent 100%),
+        radial-gradient(circle at 50% -10%, #1b2766 0%, transparent 55%),
+        linear-gradient(180deg, #0a1030, var(--bg) 60%);
+}
+
+[data-theme='starlight'] .pitch__circle {
+    border-color: rgba(205, 214, 244, 0.05);
+}
+
+[data-theme='starlight'] .pitch__glow--left {
+    background: radial-gradient(circle, rgba(110, 130, 255, 0.12), transparent 65%);
+}
+
+[data-theme='starlight'] .pitch__glow--right {
+    background: radial-gradient(circle, rgba(190, 160, 255, 0.08), transparent 65%);
+}
+
+[data-theme='starlight'] .layout {
+    max-width: none;
+    padding-left: clamp(16px, 4vw, 72px);
+    padding-right: clamp(16px, 4vw, 72px);
+}
+
+[data-theme='starlight'] .panel,
+[data-theme='starlight'] .modal__card {
+    background: rgba(255, 255, 255, 0.035);
+    backdrop-filter: blur(16px);
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 24px 70px rgba(0, 0, 6, 0.55);
+}
+
+[data-theme='starlight'] .header__title,
+[data-theme='starlight'] .panel__title,
+[data-theme='starlight'] .draw__title,
+[data-theme='starlight'] .locked__title,
+[data-theme='starlight'] .bracket__stage-title,
+[data-theme='starlight'] .modal__title,
+[data-theme='starlight'] .group-tabs__tab,
+[data-theme='starlight'] .controls__btn,
+[data-theme='starlight'] .weeks__pill,
+[data-theme='starlight'] .game__vs,
+[data-theme='starlight'] .statcard__title {
+    font-style: normal;
+    font-stretch: 100%;
+    letter-spacing: 0.06em;
+}
+
+[data-theme='starlight'] .header__title {
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-size: clamp(28px, 4.4vw, 50px);
+}
+
+[data-theme='starlight'] .header__title em {
+    -webkit-text-stroke: 1px var(--gold);
+}
+
+[data-theme='starlight'] .header__kicker {
+    color: var(--gold);
+    border-color: color-mix(in srgb, var(--gold) 35%, transparent);
+    background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+[data-theme='starlight'] .panel__title::before {
+    transform: rotate(45deg);
+    border-radius: 1px;
+}
+
+[data-theme='starlight'] .controls {
+    background: rgba(10, 14, 38, 0.75);
+    backdrop-filter: blur(20px);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 760px) {
+    /* Tabs pinned to the TOP on mobile; action bar stays at the bottom. */
+    [data-theme='starlight'] .group-tabs {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        top: 10px;
+        z-index: 12;
+        margin: 0;
+        padding: 8px;
+        background: rgba(10, 14, 38, 0.88);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+    }
+
+    [data-theme='starlight'] .group-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    [data-theme='starlight'] .layout {
+        padding-top: 84px;
+        padding-bottom: 150px;
+    }
+}
+

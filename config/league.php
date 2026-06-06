@@ -15,10 +15,21 @@ return [
     */
 
     'average_total_goals' => 2.8,
-    'min_expected_goals' => 0.20,
+    'min_expected_goals' => 0.18,
     'max_goals_per_side' => 9,
     'goalkeeper_dampening' => 350,
-    'supporter_dampening' => 450,
+
+    // Logistic strength scale with a CONVEX gap curve:
+    //   share = 1/(1+e^(-x)),  x = sign(Δ)·|Δ|^gamma / scale
+    // gamma > 1 compresses small gaps (Δ1 stays ~40/31) while letting
+    // big gaps dominate (Δ4 ≈ 69/9, Δ17 ≈ 85/2).
+    'strength_gamma' => 1.4,
+    'strength_scale' => 5.0,
+
+    // Home edge as ADDITIVE effective-power points (multipliers would
+    // explode under the exponential scale). ≈ +0.9..1.3 points total.
+    'home_advantage_power' => 0.06, // × team.home_advantage
+    'supporter_power' => 0.005,     // × team.supporter_strength
 
     /*
     |--------------------------------------------------------------------------
@@ -31,7 +42,7 @@ return [
     |
     */
 
-    'prediction_start_week' => 4,
+    'prediction_start_week' => 3,
     'prediction_iterations' => 1000,
 
     /*

@@ -27,4 +27,18 @@ class KnockoutController extends Controller
 
         return response()->json($this->knockout->state());
     }
+
+    /**
+     * Play the entire knockout phase to the final in one go.
+     */
+    public function advanceAll(): JsonResponse
+    {
+        try {
+            $this->knockout->advanceAll();
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 409);
+        }
+
+        return response()->json($this->knockout->state());
+    }
 }

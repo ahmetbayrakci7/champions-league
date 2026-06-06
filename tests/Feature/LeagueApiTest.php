@@ -136,13 +136,15 @@ class LeagueApiTest extends TestCase
         }
     }
 
-    public function test_predictions_stay_hidden_before_matchday_four(): void
+    public function test_predictions_stay_hidden_before_the_configured_matchday(): void
     {
         $this->postJson('/api/league/draw');
 
-        $this->postJson('/api/league/play-week');
-        $this->postJson('/api/league/play-week');
-        $this->postJson('/api/league/play-week');
+        $startWeek = (int) config('league.prediction_start_week');
+
+        foreach (range(1, $startWeek - 1) as $week) {
+            $this->postJson('/api/league/play-week');
+        }
 
         $state = $this->getJson('/api/league');
 

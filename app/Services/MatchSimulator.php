@@ -36,16 +36,24 @@ class MatchSimulator implements MatchSimulatorInterface
 
     public function expectedGoals(Team $home, Team $away, bool $neutral = false): array
     {
-        $homeStrength = (float) $home->power;
+        $homeEffective = (float) $home->power;
 
         if (! $neutral) {
-            $homeStrength *= (1 + $home->home_advantage / 100)
-                * (1 + $home->supporter_strength / config('league.supporter_dampening'));
+            $homeEffective += $home->home_advantage * (float) config('league.home_advantage_power')
+                + $home->supporter_strength * (float) config('league.supporter_power');
         }
 
-        $awayStrength = (float) $away->power;
+        $awayEffective = (float) $away->power;
 
-        $share = $homeStrength / ($homeStrength + $awayStrength);
+        // Logistic share over a CONVEX gap curve: 1-2 point gaps stay
+        // genuinely competitive, 4+ point gaps become dominant.
+        $delta = $homeEffective - $awayEffective;
+        $gamma = (float) config('league.strength_gamma');
+        $scale = (float) config('league.strength_scale');
+
+        $x = $delta === 0.0 ? 0.0 : (abs($delta) ** $gamma) / $scale * ($delta <=> 0);
+        $share = 1 / (1 + exp(-$x));
+
         $totalGoals = (float) config('league.average_total_goals');
 
         // Opposing goalkeeper suppresses a side's expected goals.

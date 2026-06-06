@@ -73,6 +73,17 @@ export const useLeagueStore = defineStore('league', {
         openGame(state) {
             return state.openGameId ? state.gameDetails[state.openGameId] ?? null : null;
         },
+        knockoutNextLabel(state) {
+            const next = state.knockout?.next;
+
+            if (!next) return null;
+            if (next.action === 'draw') return t('ko.draw_r16');
+            if (next.action === 'done') return t('ko.done');
+
+            return next.leg
+                ? t('ko.play', { stage: t(`stage.${next.stage}`), leg: next.leg })
+                : t('ko.playSingle', { stage: t(`stage.${next.stage}`) });
+        },
     },
 
     actions: {
@@ -164,6 +175,19 @@ export const useLeagueStore = defineStore('league', {
         async advanceKnockout() {
             await this.run('knockout', async () => {
                 const { data } = await axios.post('/api/knockout/advance');
+                this.knockout = data;
+                this.gameDetails = {};
+                this.stats = null;
+
+                if (data.champion) {
+                    toast.fire({ icon: 'success', title: t('toast.champions', { name: data.champion.name }) });
+                }
+            });
+        },
+
+        async advanceKnockoutAll() {
+            await this.run('knockout-all', async () => {
+                const { data } = await axios.post('/api/knockout/advance-all');
                 this.knockout = data;
                 this.gameDetails = {};
                 this.stats = null;

@@ -14,6 +14,7 @@ Route::post('/league/play-all', [LeagueController::class, 'playAll']);
 Route::post('/league/reset', [LeagueController::class, 'reset']);
 
 Route::post('/knockout/advance', [KnockoutController::class, 'advance']);
+Route::post('/knockout/advance-all', [KnockoutController::class, 'advanceAll']);
 
 Route::get('/stats', [StatsController::class, 'index']);
 Route::get('/teams/{team}', [TeamController::class, 'show']);

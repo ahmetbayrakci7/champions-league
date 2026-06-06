@@ -136,7 +136,7 @@ class SuspensionServiceTest extends TestCase
         );
     }
 
-    public function test_a_ban_earned_in_the_qf_second_leg_is_still_served_in_the_semis(): void
+    public function test_third_yellow_in_the_qf_second_leg_is_forgiven_by_the_amnesty(): void
     {
         $this->card($this->game(7), 'yellow');
         $this->card($this->game(9), 'yellow');
@@ -144,12 +144,26 @@ class SuspensionServiceTest extends TestCase
 
         $sfLegOne = $this->game(11, played: false);
 
-        $suspended = $this->service->suspendedPlayers($this->team, $sfLegOne);
+        $this->assertSame(
+            [],
+            $this->service->suspendedPlayers($this->team, $sfLegOne),
+            'The post-QF amnesty must wipe even a freshly completed yellow cycle',
+        );
+    }
 
-        $this->assertArrayHasKey(
-            $this->player->id,
-            $suspended,
-            'A suspension already imposed is not covered by the amnesty',
+    public function test_nobody_can_be_yellow_suspended_in_the_semis_or_final(): void
+    {
+        // Bookings in every match through the semi-final second leg.
+        foreach ([7, 8, 9, 10, 11, 12] as $week) {
+            $this->card($this->game($week), 'yellow');
+        }
+
+        $final = $this->game(13, played: false);
+
+        $this->assertSame(
+            [],
+            $this->service->suspendedPlayers($this->team, $final),
+            'Post-reset yellows (max 2 before the final) can never reach the threshold',
         );
     }
 

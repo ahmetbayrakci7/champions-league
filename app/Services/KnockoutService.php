@@ -106,6 +106,21 @@ class KnockoutService implements KnockoutServiceInterface
         });
     }
 
+    public function advanceAll(): void
+    {
+        if (! $this->groupStageOver()) {
+            throw new RuntimeException('The group stage is not finished yet.');
+        }
+
+        if (Tie::count() === 0) {
+            $this->advance(); // draw the Round of 16 first
+        }
+
+        while (Game::where('stage', '!=', 'group')->where('is_played', false)->exists()) {
+            $this->advance();
+        }
+    }
+
     /**
      * R16 draw: group winners host leg 2, runners-up host leg 1; no
      * rematch of the group, no same-association pairing (FAQ #4 spirit).
