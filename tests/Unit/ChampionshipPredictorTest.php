@@ -7,7 +7,6 @@ use App\Models\Team;
 use App\Services\ChampionshipPredictor;
 use App\Services\Contracts\MatchSimulatorInterface;
 use App\Services\MatchSimulator;
-use App\Services\StandingsCalculator;
 use App\Services\Support\MtRandomGenerator;
 use Illuminate\Support\Collection;
 use Tests\TestCase;
@@ -64,7 +63,7 @@ class ChampionshipPredictorTest extends TestCase
     {
         return new ChampionshipPredictor(
             $simulator ?? new MatchSimulator(new MtRandomGenerator()),
-            new StandingsCalculator(),
+            new MtRandomGenerator(),
         );
     }
 
