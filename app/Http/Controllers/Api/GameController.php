@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateGameRequest;
 use App\Models\Game;
 use App\Services\Contracts\InjuryServiceInterface;
+use App\Services\Contracts\KnockoutServiceInterface;
 use App\Services\Contracts\LeagueServiceInterface;
 use App\Services\Contracts\MatchSimulatorInterface;
 use App\Services\Contracts\SuspensionServiceInterface;
@@ -16,6 +17,7 @@ class GameController extends Controller
 {
     public function __construct(
         private readonly LeagueServiceInterface $league,
+        private readonly KnockoutServiceInterface $knockout,
         private readonly MatchSimulatorInterface $simulator,
         private readonly SuspensionServiceInterface $suspensions,
         private readonly InjuryServiceInterface $injuries,
@@ -113,25 +115,43 @@ class GameController extends Controller
     }
 
     /**
-     * Edit the score of an already played group game; the match is
-     * replayed with the new score fixed, so the timeline and ratings
-     * stay consistent and the standings recalculate automatically.
+     * Edit a played match score. The match is re-scored — only the goals
+     * change, cards/injuries are kept — and standings or the knockout
+     * bracket recalculate automatically.
+     *
+     * Group games lock once the Round of 16 is drawn. Knockout games stay
+     * editable until the next round's first leg is played.
      */
     public function update(UpdateGameRequest $request, Game $game): JsonResponse
     {
         if (! $game->is_played) {
-            return response()->json(['message' => 'Only played games can be edited.'], 409);
+            return response()->json(['message' => 'Only played games can be edited.', 'code' => 'not_played'], 409);
         }
 
-        if ($game->stage !== 'group') {
-            return response()->json(['message' => 'Knockout results cannot be edited — they decide the bracket.'], 409);
+        $homeGoals = (int) $request->validated('home_goals');
+        $awayGoals = (int) $request->validated('away_goals');
+
+        if ($game->stage === 'group') {
+            if ($this->knockout->isDrawn()) {
+                return response()->json([
+                    'message' => 'The knockout draw has been made — group results are locked.',
+                    'code' => 'group_locked',
+                ], 409);
+            }
+
+            $this->league->updateGame($game, $homeGoals, $awayGoals);
+
+            return response()->json($this->league->state());
         }
 
-        $this->league->updateGame(
-            $game,
-            (int) $request->validated('home_goals'),
-            (int) $request->validated('away_goals'),
-        );
+        if (! $this->knockout->canEdit($game)) {
+            return response()->json([
+                'message' => 'This round is locked — its next round has already kicked off.',
+                'code' => 'ko_locked',
+            ], 409);
+        }
+
+        $this->knockout->editGame($game, $homeGoals, $awayGoals);
 
         return response()->json($this->league->state());
     }

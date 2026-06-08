@@ -36,6 +36,8 @@ class KnockoutService implements KnockoutServiceInterface
         'final' => 'FINAL',
     ];
 
+    private const NEXT_STAGE = ['r16' => 'qf', 'qf' => 'sf', 'sf' => 'final', 'final' => null];
+
     public function __construct(
         private readonly MatchEngineInterface $engine,
         private readonly StandingsCalculatorInterface $standings,
@@ -118,6 +120,125 @@ class KnockoutService implements KnockoutServiceInterface
 
         while (Game::where('stage', '!=', 'group')->where('is_played', false)->exists()) {
             $this->advance();
+        }
+    }
+
+    public function isDrawn(): bool
+    {
+        return Tie::query()->exists();
+    }
+
+    public function canEdit(Game $game): bool
+    {
+        if ($game->stage === 'group' || ! $game->is_played) {
+            return false;
+        }
+
+        $next = self::NEXT_STAGE[$game->stage] ?? null;
+
+        // The final has no next round — it stays editable once played.
+        if ($next === null) {
+            return true;
+        }
+
+        // A round is locked once the next round's first leg is played.
+        return ! Game::where('stage', $next)->where('is_played', true)->exists();
+    }
+
+    public function editGame(Game $game, int $homeGoals, int $awayGoals): void
+    {
+        $result = $this->engine->rescore($game, $homeGoals, $awayGoals);
+
+        DB::transaction(function () use ($game, $result): void {
+            $this->persistEditedResult($game, $result);
+
+            if ($game->tie_id !== null) {
+                $this->reresolveTie(Tie::with('games')->find($game->tie_id));
+            }
+        });
+    }
+
+    /**
+     * Re-decide a tie after one of its legs was edited: clear the old
+     * outcome, recompute from the aggregate (penalties if level) and, if
+     * the winner changed, swap them into the next round's bracket slot.
+     */
+    private function reresolveTie(Tie $tie): void
+    {
+        $previousWinner = $tie->winner_team_id;
+
+        $tie->update(['winner_team_id' => null, 'home_penalties' => null, 'away_penalties' => null]);
+
+        if ($tie->games->isEmpty() || ! $tie->games->every->is_played) {
+            $this->propagateWinnerChange($tie->stage, $previousWinner, null);
+
+            return;
+        }
+
+        [$home, $away] = $this->aggregate($tie);
+
+        if ($home === $away) {
+            [$homePens, $awayPens] = $this->shootout($tie->homeTeam, $tie->awayTeam);
+
+            $tie->update([
+                'home_penalties' => $homePens,
+                'away_penalties' => $awayPens,
+                'winner_team_id' => $homePens > $awayPens ? $tie->home_team_id : $tie->away_team_id,
+            ]);
+        } else {
+            $tie->update(['winner_team_id' => $home > $away ? $tie->home_team_id : $tie->away_team_id]);
+        }
+
+        $this->propagateWinnerChange($tie->stage, $previousWinner, $tie->fresh()->winner_team_id);
+    }
+
+    /**
+     * When an edited tie's winner changes, replace the old qualifier
+     * with the new one in the next round's (unplayed) tie and games.
+     */
+    private function propagateWinnerChange(string $stage, ?int $oldWinner, ?int $newWinner): void
+    {
+        if ($oldWinner === $newWinner || $oldWinner === null) {
+            return;
+        }
+
+        $next = self::NEXT_STAGE[$stage] ?? null;
+
+        if ($next === null) {
+            return; // final: the champion is read straight from the tie
+        }
+
+        $tie = Tie::with('games')
+            ->where('stage', $next)
+            ->where(fn ($query) => $query
+                ->where('home_team_id', $oldWinner)
+                ->orWhere('away_team_id', $oldWinner))
+            ->first();
+
+        if ($tie === null) {
+            return;
+        }
+
+        $isHomeSlot = $tie->home_team_id === $oldWinner;
+
+        // newWinner may be null only if the edited tie became unresolved;
+        // guard so we never write a null qualifier into the bracket.
+        if ($newWinner === null) {
+            return;
+        }
+
+        $tie->update($isHomeSlot ? ['home_team_id' => $newWinner] : ['away_team_id' => $newWinner]);
+
+        foreach ($tie->games as $leg) {
+            // leg 1 (and the single-game final) seat the tie's home side
+            // at home; leg 2 swaps the venues.
+            $homeIsTieHome = $leg->leg !== 2;
+
+            if ($isHomeSlot === $homeIsTieHome) {
+                $leg->update(['home_team_id' => $newWinner]);
+            } else {
+                $leg->update(['away_team_id' => $newWinner]);
+            }
         }
     }
 

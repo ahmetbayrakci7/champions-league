@@ -78,23 +78,23 @@ class InjuryServiceTest extends TestCase
         Player::factory()->count(13)->for($this->team)->create();
         Player::factory()->count(13)->for($this->rival)->create();
 
-        // Replay matches until an injury occurs (9% per team per match).
-        $game = $this->game(1, played: false);
+        // Play fresh matchdays until an injury occurs (9% per team per match).
         $league = app(\App\Services\Contracts\LeagueServiceInterface::class);
 
         $found = null;
 
-        for ($i = 0; $i < 60 && $found === null; $i++) {
-            $league->updateGame($game, 1, 1);
+        for ($week = 1; $week <= 80 && $found === null; $week++) {
+            $this->game($week, played: false);
+            $league->playNextWeek();
             $found = Injury::first();
         }
 
-        $this->assertNotNull($found, 'No injury in 60 simulated matches — chance looks broken');
+        $this->assertNotNull($found, 'No injury in 80 simulated matches — chance looks broken');
         $this->assertGreaterThanOrEqual(1, $found->matches);
         $this->assertLessThanOrEqual(5, $found->matches);
 
-        // The injured player went off in the match itself.
-        $appearance = $game->appearances()->where('player_id', $found->player_id)->first();
+        // The injured player went off in the match it happened in.
+        $appearance = $found->game->appearances()->where('player_id', $found->player_id)->first();
         $this->assertNotNull($appearance->went_off);
     }
 }

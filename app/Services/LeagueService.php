@@ -194,22 +194,15 @@ class LeagueService implements LeagueServiceInterface
     }
 
     /**
-     * Manual score edits replay the whole match with the new score
-     * fixed, so the timeline, lineups and ratings stay consistent.
+     * Manual score edit: keeps the same lineups, cards and injuries —
+     * only the goals are regenerated to match the new scoreline and the
+     * ratings recomputed.
      */
     public function updateGame(Game $game, int $homeGoals, int $awayGoals): Game
     {
-        $game->load(['homeTeam.players', 'awayTeam.players']);
+        $result = $this->engine->rescore($game, $homeGoals, $awayGoals);
 
-        $this->prepareSides($game);
-
-        $result = $this->engine->play(
-            $game->homeTeam,
-            $game->awayTeam,
-            ['home' => $homeGoals, 'away' => $awayGoals],
-        );
-
-        DB::transaction(fn () => $this->persistResult($game, $result));
+        DB::transaction(fn () => $this->persistEditedResult($game, $result));
 
         return $game->refresh();
     }

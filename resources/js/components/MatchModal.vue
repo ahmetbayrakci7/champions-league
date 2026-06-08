@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useLeagueStore } from '../stores/league';
 import { t, dateLocale } from '../i18n';
 
@@ -7,6 +7,28 @@ const league = useLeagueStore();
 
 const detail = computed(() => league.openGame);
 const game = computed(() => detail.value?.game ?? null);
+
+const editing = ref(false);
+const editHome = ref(0);
+const editAway = ref(0);
+
+// Close the editor whenever a different match is opened.
+watch(() => league.openGameId, () => { editing.value = false; });
+
+function startEdit() {
+    editHome.value = game.value.home_goals;
+    editAway.value = game.value.away_goals;
+    editing.value = true;
+}
+
+function clampGoals(value) {
+    return Math.max(0, Math.min(99, Number(value) || 0));
+}
+
+async function saveEdit() {
+    await league.updateGame(game.value.id, clampGoals(editHome.value), clampGoals(editAway.value));
+    editing.value = false;
+}
 
 const hasAbsentees = computed(() => {
     if (!detail.value) return false;
@@ -154,7 +176,12 @@ function banLabel(reason) {
                                 <span>{{ game.home_team.name }}</span>
                             </div>
                             <div class="match__score">
-                                <template v-if="game.is_played">
+                                <template v-if="editing">
+                                    <input v-model.number="editHome" class="match__input" type="number" min="0" max="99" aria-label="Home goals">
+                                    <i>:</i>
+                                    <input v-model.number="editAway" class="match__input" type="number" min="0" max="99" aria-label="Away goals">
+                                </template>
+                                <template v-else-if="game.is_played">
                                     {{ game.home_goals }}<i>:</i>{{ game.away_goals }}
                                 </template>
                                 <span v-else class="match__vs">VS</span>
@@ -165,6 +192,24 @@ function banLabel(reason) {
                                 <span>{{ game.away_team.name }}</span>
                             </div>
                         </header>
+
+                        <div v-if="game.is_played" class="match__edit">
+                            <template v-if="editing">
+                                <button
+                                    type="button"
+                                    class="match__edit-btn match__edit-btn--save"
+                                    :disabled="league.busyAction === 'edit'"
+                                    @click="saveEdit"
+                                >
+                                    <span v-if="league.busyAction === 'edit'" class="controls__spinner" aria-hidden="true"></span>
+                                    <template v-else>&#10003; {{ t('match.editSave') }}</template>
+                                </button>
+                                <button type="button" class="match__edit-btn" @click="editing = false">{{ t('match.editCancel') }}</button>
+                            </template>
+                            <button v-else type="button" class="match__edit-btn" @click="startEdit">
+                                &#9998; {{ t('match.editScore') }}
+                            </button>
+                        </div>
 
                         <section class="probs" aria-label="Win probabilities">
                             <p class="probs__label">{{ game.is_played ? t('match.preOdds') : t('match.winProb') }}</p>

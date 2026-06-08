@@ -59,4 +59,39 @@ trait PersistsMatchResults
             $result->appearances,
         ));
     }
+
+    /**
+     * Persist a manually edited result: replaces the score, events and
+     * appearance ratings but LEAVES the injuries table untouched (an
+     * edit only changes the scoreline, never the cards/injuries).
+     */
+    private function persistEditedResult(Game $game, MatchResult $result): void
+    {
+        $game->events()->delete();
+        $game->appearances()->delete();
+
+        $game->update([
+            'home_goals' => $result->homeGoals,
+            'away_goals' => $result->awayGoals,
+            'is_played' => true,
+        ]);
+
+        $now = now();
+
+        MatchEvent::insert(array_map(
+            function (array $event) use ($game, $now): array {
+                if (isset($event['params'])) {
+                    $event['params'] = json_encode($event['params'], JSON_UNESCAPED_UNICODE);
+                }
+
+                return $event + ['game_id' => $game->id, 'created_at' => $now, 'updated_at' => $now];
+            },
+            $result->events,
+        ));
+
+        Appearance::insert(array_map(
+            fn (array $appearance): array => $appearance + ['game_id' => $game->id, 'created_at' => $now, 'updated_at' => $now],
+            $result->appearances,
+        ));
+    }
 }

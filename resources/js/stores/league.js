@@ -229,6 +229,12 @@ export const useLeagueStore = defineStore('league', {
                     away_goals: awayGoals,
                 });
                 this.applyState(data);
+
+                // Refresh the open match so its new summary loads in place.
+                if (this.openGameId) {
+                    await this.openMatch(this.openGameId);
+                }
+
                 toast.fire({ icon: 'success', title: t('toast.scoreUpdated') });
             });
         },
@@ -300,10 +306,12 @@ export const useLeagueStore = defineStore('league', {
         },
 
         notifyError(error) {
-            toast.fire({
-                icon: 'error',
-                title: error?.response?.data?.message ?? t('toast.error'),
-            });
+            const data = error?.response?.data;
+            const title = data?.code
+                ? t(`edit.${data.code}`)
+                : (data?.message ?? t('toast.error'));
+
+            toast.fire({ icon: 'error', title });
         },
     },
 });

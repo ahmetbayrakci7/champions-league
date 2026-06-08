@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DataTransferObjects\MatchResult;
+use App\Models\Game;
 use App\Models\MatchEvent;
 use App\Models\Player;
 use App\Models\Team;
@@ -459,48 +460,206 @@ class MatchEngine implements MatchEngineInterface
         $rows = [];
 
         foreach ($side['records'] as $record) {
-            /** @var Player $player */
-            $player = $record['player'];
-
-            $rating = 6.0;
-            $rating += $record['goals'] * 1.05;
-            $rating += $record['assists'] * 0.65;
-            $rating += match (true) {
-                $scored > $conceded => 0.25,
-                $scored < $conceded => -0.25,
-                default => 0.0,
-            };
-
-            $defensive = in_array($player->position_type, ['goalkeeper', 'defense'], true);
-
-            if ($defensive) {
-                $rating += $conceded === 0 ? 0.55 : -0.15 * $conceded;
-            }
-
-            $rating -= $record['yellow'] * 0.3;
-            $rating -= $record['red'] ? 1.2 : 0.0;
-            $rating -= $record['injured'] ? 0.2 : 0.0;
-            $rating += ($player->overall - 76) / 40; // class shines through
-            $rating += ($this->random->float() - 0.45) * 1.2;
-
-            // Cameo appearances drift back towards the baseline.
-            $minutes = ($record['went_off'] ?? 90) - ($record['came_on'] ?? 0);
-
-            if ($minutes < 30) {
-                $rating = 6.0 + ($rating - 6.0) * 0.6;
-            }
-
             $rows[] = [
                 'team_id' => $side['team']->id,
-                'player_id' => $player->id,
+                'player_id' => $record['player']->id,
                 'is_starting' => $record['is_starting'],
                 'came_on' => $record['came_on'],
                 'went_off' => $record['went_off'],
-                'rating' => round(max(2.0, min(10.0, $rating)), 1),
+                'rating' => $this->ratePlayer($record, $scored, $conceded),
             ];
         }
 
         return $rows;
+    }
+
+    /**
+     * Performance rating for one player: base 6.0 shaped by goals,
+     * assists, result, defensive record, discipline, class and noise.
+     *
+     * @param  array<string, mixed>  $record
+     */
+    private function ratePlayer(array $record, int $scored, int $conceded): float
+    {
+        /** @var Player $player */
+        $player = $record['player'];
+
+        $rating = 6.0;
+        $rating += $record['goals'] * 1.05;
+        $rating += $record['assists'] * 0.65;
+        $rating += match (true) {
+            $scored > $conceded => 0.25,
+            $scored < $conceded => -0.25,
+            default => 0.0,
+        };
+
+        $defensive = in_array($player->position_type, ['goalkeeper', 'defense'], true);
+
+        if ($defensive) {
+            $rating += $conceded === 0 ? 0.55 : -0.15 * $conceded;
+        }
+
+        $rating -= $record['yellow'] * 0.3;
+        $rating -= $record['red'] ? 1.2 : 0.0;
+        $rating -= $record['injured'] ? 0.2 : 0.0;
+        $rating += ($player->overall - 76) / 40; // class shines through
+        $rating += ($this->random->float() - 0.45) * 1.2;
+
+        // Cameo appearances drift back towards the baseline.
+        $minutes = ($record['went_off'] ?? 90) - ($record['came_on'] ?? 0);
+
+        if ($minutes < 30) {
+            $rating = 6.0 + ($rating - 6.0) * 0.6;
+        }
+
+        return round(max(2.0, min(10.0, $rating)), 1);
+    }
+
+    /**
+     * Re-build a played match for a manually edited score: the booking,
+     * injury and substitution events (and who appeared) are kept exactly
+     * as they were — only the goals are regenerated to match the new
+     * scoreline, and ratings recomputed from the new result.
+     */
+    public function rescore(Game $game, int $homeGoals, int $awayGoals): MatchResult
+    {
+        $game->loadMissing(['appearances.player', 'events']);
+
+        // Rebuild per-player records from the stored appearances; fold in
+        // the kept cards/injuries so ratings still reflect them.
+        $records = [];
+
+        foreach ($game->appearances as $appearance) {
+            if ($appearance->player === null) {
+                continue;
+            }
+
+            $records[$appearance->player_id] = [
+                'player' => $appearance->player,
+                'team_id' => $appearance->team_id,
+                'is_starting' => (bool) $appearance->is_starting,
+                'came_on' => $appearance->came_on,
+                'went_off' => $appearance->went_off,
+                'goals' => 0,
+                'assists' => 0,
+                'yellow' => 0,
+                'red' => false,
+                'injured' => false,
+            ];
+        }
+
+        $events = [];
+
+        foreach ($game->events as $event) {
+            if ($event->type === MatchEvent::TYPE_GOAL) {
+                continue; // goals are regenerated below
+            }
+
+            if (isset($records[$event->player_id])) {
+                match ($event->type) {
+                    MatchEvent::TYPE_YELLOW => $records[$event->player_id]['yellow']++,
+                    MatchEvent::TYPE_RED => $records[$event->player_id]['red'] = true,
+                    MatchEvent::TYPE_INJURY => $records[$event->player_id]['injured'] = true,
+                    default => null,
+                };
+            }
+
+            $events[] = [
+                'minute' => $event->minute,
+                'type' => $event->type,
+                'team_id' => $event->team_id,
+                'player_id' => $event->player_id,
+                'related_player_id' => $event->related_player_id,
+                'commentary' => $event->commentary,
+                'template' => $event->template,
+                'params' => $event->params,
+            ];
+        }
+
+        $this->layOutEditedGoals($records, $game->home_team_id, $homeGoals, $events);
+        $this->layOutEditedGoals($records, $game->away_team_id, $awayGoals, $events);
+
+        usort($events, fn (array $a, array $b): int => ($a['minute'] <=> $b['minute']));
+
+        $appearances = [];
+
+        foreach ($records as $record) {
+            $scored = $record['team_id'] === $game->home_team_id ? $homeGoals : $awayGoals;
+            $conceded = $record['team_id'] === $game->home_team_id ? $awayGoals : $homeGoals;
+
+            $appearances[] = [
+                'team_id' => $record['team_id'],
+                'player_id' => $record['player']->id,
+                'is_starting' => $record['is_starting'],
+                'came_on' => $record['came_on'],
+                'went_off' => $record['went_off'],
+                'rating' => $this->ratePlayer($record, $scored, $conceded),
+            ];
+        }
+
+        return new MatchResult($homeGoals, $awayGoals, $events, $appearances);
+    }
+
+    /**
+     * Distribute a team's edited goal count across the players who were
+     * on the pitch, mirroring the live engine's scorer/assist weighting.
+     *
+     * @param  array<int, array<string, mixed>>  $records
+     * @param  array<int, array<string, mixed>>  $events
+     */
+    private function layOutEditedGoals(array &$records, int $teamId, int $goals, array &$events): void
+    {
+        for ($i = 0; $i < $goals; $i++) {
+            $minute = 1 + (int) floor($this->random->float() * 90);
+
+            $onPitch = collect($records)
+                ->filter(fn (array $r) => $r['team_id'] === $teamId)
+                ->filter(function (array $r) use ($minute): bool {
+                    $on = $r['came_on'] === null || $r['came_on'] <= $minute;
+                    $stillOn = $r['went_off'] === null || $r['went_off'] > $minute;
+
+                    return $on && $stillOn;
+                })
+                ->map(fn (array $r) => $r['player'])
+                ->values();
+
+            $scorer = $this->pickWeighted($onPitch, fn (Player $p) => $this->scorerWeight($p));
+
+            $assister = null;
+
+            if ($scorer !== null && $this->random->float() < (float) config('league.engine.assist_chance')) {
+                $assister = $this->pickWeighted(
+                    $onPitch->reject(fn (Player $p) => $p->id === $scorer->id),
+                    fn (Player $p) => max(10, $p->passing ?? $p->overall),
+                );
+            }
+
+            if ($scorer !== null) {
+                $records[$scorer->id]['goals']++;
+            }
+
+            if ($assister !== null) {
+                $records[$assister->id]['assists']++;
+            }
+
+            [$index, $template] = $this->pickLine(self::GOAL_LINES);
+            $line = sprintf($template, $scorer?->name ?? 'The team');
+
+            if ($assister !== null) {
+                $line .= " ({$assister->name} with the assist)";
+            }
+
+            $events[] = [
+                'minute' => $minute,
+                'type' => MatchEvent::TYPE_GOAL,
+                'team_id' => $teamId,
+                'player_id' => $scorer?->id,
+                'related_player_id' => $assister?->id,
+                'commentary' => $line,
+                'template' => "goal.{$index}",
+                'params' => ['player' => $scorer?->name, 'assist' => $assister?->name],
+            ];
+        }
     }
 
     private function scorerWeight(Player $player): float

@@ -24,4 +24,22 @@ interface KnockoutServiceInterface
      * every remaining leg through to the final — champion decided.
      */
     public function advanceAll(): void;
+
+    /**
+     * Whether a knockout game's score may still be edited: a round is
+     * editable until the next round's first leg has been played.
+     */
+    public function canEdit(\App\Models\Game $game): bool;
+
+    /**
+     * Edit a knockout leg's score: regenerate goals (cards/injuries
+     * kept), re-resolve the tie (aggregate → penalties if level) and
+     * propagate any change of winner into the next round's bracket.
+     */
+    public function editGame(\App\Models\Game $game, int $homeGoals, int $awayGoals): void;
+
+    /**
+     * Has the Round of 16 been drawn? (knockout phase started)
+     */
+    public function isDrawn(): bool;
 }

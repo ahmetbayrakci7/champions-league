@@ -556,8 +556,9 @@ body {
 }
 
 .game {
+    position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) 30px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 10px;
     background: rgba(255, 255, 255, 0.02);
@@ -571,9 +572,19 @@ body {
     border-color: var(--line-bright);
 }
 
-.game.is-editing {
-    border-color: var(--lime);
-    box-shadow: 0 0 0 1px var(--lime), 0 0 24px color-mix(in srgb, var(--lime) 15%, transparent);
+/* subtle pencil hint on played games — full editor lives in the modal */
+.game__edithint {
+    position: absolute;
+    top: 7px;
+    right: 9px;
+    font-size: 10px;
+    color: var(--ink-faint);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.game.is-openable:hover .game__edithint {
+    opacity: 0.8;
 }
 
 .game__kickoff {
@@ -678,69 +689,6 @@ body {
     font-size: 13px;
     letter-spacing: 0.2em;
     color: var(--ink-faint);
-}
-
-.game__input {
-    width: 44px;
-    padding: 6px 0;
-    text-align: center;
-    font-family: var(--font-display);
-    font-weight: 900;
-    font-size: 18px;
-    color: var(--ink);
-    background: var(--bg);
-    border: 1px solid var(--line-bright);
-    border-radius: 8px;
-    outline: none;
-}
-
-.game__input:focus {
-    border-color: var(--lime);
-}
-
-.game__input::-webkit-outer-spin-button,
-.game__input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-}
-
-.game__actions {
-    display: flex;
-    gap: 4px;
-    justify-content: flex-end;
-}
-
-.game__btn {
-    width: 26px;
-    height: 26px;
-    display: grid;
-    place-items: center;
-    font-size: 12px;
-    color: var(--ink-dim);
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 7px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.game__btn:hover {
-    color: var(--ink);
-    border-color: var(--line-bright);
-}
-
-.game__btn--save {
-    color: var(--lime);
-    border-color: var(--lime);
-}
-
-.game__btn--save:hover {
-    background: var(--lime);
-    color: var(--accent-ink);
-}
-
-.game__btn:disabled {
-    opacity: 0.4;
-    cursor: wait;
 }
 
 .fade-enter-active,
@@ -1542,6 +1490,73 @@ body {
     font-size: 20px;
     letter-spacing: 0.2em;
     color: var(--ink-faint);
+}
+
+.match__input {
+    width: 58px;
+    padding: 4px 0;
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 38px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 2px solid var(--lime);
+    border-radius: 10px;
+    outline: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.match__input::-webkit-outer-spin-button,
+.match__input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.match__edit {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.match__edit-btn {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    background: transparent;
+    border: 1px solid var(--line-bright);
+    border-radius: 10px;
+    padding: 9px 18px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.2s var(--ease-snap);
+}
+
+.match__edit-btn:hover {
+    color: var(--ink);
+    border-color: var(--ink-dim);
+}
+
+.match__edit-btn--save {
+    color: var(--accent-ink);
+    background: var(--lime);
+    border-color: var(--lime);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--lime) 30%, transparent);
+}
+
+.match__edit-btn--save:hover {
+    color: var(--accent-ink);
+    box-shadow: 0 0 26px color-mix(in srgb, var(--lime) 45%, transparent);
+}
+
+.match__edit-btn:disabled {
+    opacity: 0.5;
+    cursor: wait;
 }
 
 .match__subtitle {

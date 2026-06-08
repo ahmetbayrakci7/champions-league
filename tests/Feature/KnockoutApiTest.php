@@ -116,15 +116,70 @@ class KnockoutApiTest extends TestCase
         $this->postJson('/api/knockout/advance-all')->assertStatus(409);
     }
 
-    public function test_knockout_results_cannot_be_edited(): void
+    public function test_knockout_leg_is_editable_until_the_next_round_kicks_off(): void
     {
         $this->postJson('/api/league/play-all');
         $this->postJson('/api/knockout/advance'); // draw
-        $this->postJson('/api/knockout/advance'); // leg 1
+        $this->postJson('/api/knockout/advance'); // R16 leg 1
+        $this->postJson('/api/knockout/advance'); // R16 leg 2 → QF seeded, unplayed
 
-        $game = Game::where('stage', 'r16')->where('is_played', true)->first();
+        $r16 = Game::where('stage', 'r16')->where('is_played', true)->first();
 
-        $this->putJson("/api/games/{$game->id}", ['home_goals' => 9, 'away_goals' => 0])
-            ->assertStatus(409);
+        // QF not played yet → R16 still editable.
+        $this->putJson("/api/games/{$r16->id}", ['home_goals' => 4, 'away_goals' => 0])->assertOk();
+
+        // Once the QF first leg is played, the R16 locks.
+        $this->postJson('/api/knockout/advance'); // QF leg 1
+
+        $this->putJson("/api/games/{$r16->id}", ['home_goals' => 1, 'away_goals' => 1])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'ko_locked');
+    }
+
+    public function test_editing_an_r16_tie_updates_the_qf_bracket(): void
+    {
+        $this->postJson('/api/league/play-all');
+        $this->postJson('/api/knockout/advance'); // draw
+        $this->postJson('/api/knockout/advance'); // R16 leg 1
+        $this->postJson('/api/knockout/advance'); // R16 leg 2 → QF seeded
+
+        $tie = Tie::with('games')->where('stage', 'r16')->first();
+        $leg1 = $tie->games->firstWhere('leg', 1);
+        $leg2 = $tie->games->firstWhere('leg', 2);
+
+        // Force the away side of the tie to win the tie decisively.
+        $this->putJson("/api/games/{$leg1->id}", ['home_goals' => 0, 'away_goals' => 5])->assertOk();
+        $this->putJson("/api/games/{$leg2->id}", ['home_goals' => 5, 'away_goals' => 0])->assertOk();
+
+        $tie->refresh();
+        $this->assertSame($tie->away_team_id, $tie->winner_team_id);
+
+        // The qualifier appears in the quarter-finals; the loser does not.
+        $this->assertTrue(
+            Tie::where('stage', 'qf')
+                ->where(fn ($q) => $q->where('home_team_id', $tie->away_team_id)->orWhere('away_team_id', $tie->away_team_id))
+                ->exists(),
+        );
+        $this->assertFalse(
+            Tie::where('stage', 'qf')
+                ->where(fn ($q) => $q->where('home_team_id', $tie->home_team_id)->orWhere('away_team_id', $tie->home_team_id))
+                ->exists(),
+        );
+    }
+
+    public function test_group_results_lock_once_the_knockout_is_drawn(): void
+    {
+        $this->postJson('/api/league/play-all');
+
+        $groupGame = Game::where('stage', 'group')->where('is_played', true)->first();
+
+        // Editable before the draw.
+        $this->putJson("/api/games/{$groupGame->id}", ['home_goals' => 2, 'away_goals' => 1])->assertOk();
+
+        $this->postJson('/api/knockout/advance'); // draw the Round of 16
+
+        $this->putJson("/api/games/{$groupGame->id}", ['home_goals' => 3, 'away_goals' => 0])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'group_locked');
     }
 }
